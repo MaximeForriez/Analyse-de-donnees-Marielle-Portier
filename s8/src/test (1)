@@ -1,0 +1,61 @@
+import numpy as np
+import pandas as pd
+import scipy.stats
+
+def ouvrir_un_fichier(nom):
+    """Ouvre un fichier CSV et retourne son contenu sous forme de DataFrame."""
+    return pd.read_csv(nom)
+
+def tableau_de_contingence(index_noms, donnees):
+    """Crée un DataFrame avec des noms d'index personnalisés."""
+    index_valeurs = {i: nom for i, nom in enumerate(index_noms)}
+    return pd.DataFrame(donnees).rename(index=index_valeurs)
+
+def somme_des_colonnes(tableau):
+    """Retourne la somme de chaque colonne du DataFrame."""
+    return [tableau[col].sum() for col in tableau.columns]
+
+def somme_des_lignes(tableau):
+    """Retourne la somme de chaque ligne du DataFrame."""
+    return [row.sum() for _, row in tableau.iterrows()]
+
+# Utilisation de chemins compatibles Windows (r"" ou /)
+data = ouvrir_un_fichier(r"C:\Python\s8\src\data\Socioprofessionnelle-vs-sexe.csv")
+
+tableauDeContingence = tableau_de_contingence(
+    data["Catégorie"], {"Femmes": data["Femmes"], "Hommes": data["Hommes"]}
+)
+print(tableauDeContingence)
+
+print("Calcul des marges")
+
+marge_lignes = somme_des_lignes(tableauDeContingence)
+marge_colonnes = somme_des_colonnes(tableauDeContingence)
+
+total_lignes = sum(marge_lignes)
+total_colonnes = sum(marge_colonnes)
+
+if total_lignes == total_colonnes:
+    print("Le total des marges des lignes et des colonnes est identique.")
+else:
+    print("Le total des marges des lignes et des colonnes est différent.")
+
+print("Test du chi2")
+chi2, p, dof, expected = scipy.stats.chi2_contingency(tableauDeContingence)
+
+print(f"Statistique du chi2 : {chi2}")
+print(f"p-value : {p}")
+print(f"Degrés de liberté : {dof}")
+print("Tableau des effectifs attendus :")
+print(expected)
+
+if p < 0.05:
+    print("Il existe une liaison significative entre les variables (rejet de H0).")
+else:
+    print("Il n'existe pas de liaison significative entre les variables (non-rejet de H0).")
+
+# Calculer l'intensité de liaison phi2 de Pearson
+print("Intensité de liaison phi2")
+n = tableauDeContingence.values.sum()
+phi2 = chi2 / n
+print(f"phi2 de Pearson : {phi2}")
